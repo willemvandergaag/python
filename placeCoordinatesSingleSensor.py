@@ -36,27 +36,6 @@ def placeCoordinateAlpha():
     plt.clf()
     updatedAlpha = 0
 
-def placeCoordinateBeta():
-    global xs
-    global ys
-    xs = []
-    ys = []
-    betaxImg = 24 - betax
-    xs.append(betaxImg + 36)
-    ys.append(betay + 48)
-
-    plt.imshow(img, extent=[0, 72, 0, 96])
-    plt.plot(xs, ys, 'bX', markersize = 12)
-    plt.annotate("2", # this is the text
-                (xs[0],ys[0]), # this is the point to label
-                textcoords="offset points", # how to position the text
-                xytext=(0,10), # distance from text to points (x,y)
-                ha='center') # horizontal alignment can be left, right or center
-
-    plt.draw()
-    plt.pause(0.0001)
-    plt.clf()
-    updatedBeta = 0
 
 # The callback for when the client receives a CONNACK response from the server.
 def on_connect(client, userdata, flags, rc):
@@ -81,20 +60,10 @@ def on_message(client, userdata, msg):
         updatedAlpha = 1
         updatedBeta = 0
 
-    elif payload["sensor"] == 1:
-        global betax
-        global betay
-        betax = payload["x"]
-        betay = payload["y"]
-        print("sensor 1!")
-        updatedBeta = 1
-        updatedAlpha = 0
         
     if updatedAlpha:
         placeCoordinateAlpha()
     
-    elif updatedBeta:
-        placeCoordinateBeta()
     
     
 
