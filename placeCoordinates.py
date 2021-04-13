@@ -34,8 +34,6 @@ def placeCoordinates(sensors):
     plt.clf()
     updatedAlpha = 0
 
-    print("dit is een test")
-
 # The callback for when the client receives a CONNACK response from the server.
 def on_connect(client, userdata, flags, rc):
     print("Connected with result code "+str(rc))
