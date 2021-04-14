@@ -49,9 +49,12 @@ def on_message(client, userdata, msg):
     payload = json.loads(msg.payload)
     global sensors
 
+    x2 = map(float, payload['x'].split(','))
+    y2 = map(float, payload['y'].split(','))
+
     sensors[payload['sensor']] = {
-        'x': payload['x'],
-        'y': payload['y']
+        'x': [10, 20],
+        'y': [15, 30]
     }
         
     placeCoordinates(sensors)
