@@ -24,7 +24,7 @@ def placeCoordinates(sensors):
     for i in sensors:
         print(i)
         plt.plot(sensors[i]['x'], sensors[i]['y'], 'rX', markersize = 12)
-        plt.annotate("1", # this is the text
+        plt.annotate(i, # this is the text
                     (sensors[i]['x'], sensors[i]['y']), # this is the point to label
                     textcoords="offset points", # how to position the text
                     xytext=(0,10), # distance from text to points (x,y)
@@ -74,13 +74,3 @@ img = plt.imread("C:\\Users\\wille\\Desktop\\python\\map.jpg")
 # https://github.com/eclipse/paho.mqtt.python
 # for information on how to use other loop*() functions
 client.loop_forever()
-
-
-
-
-
-
-
-
-
-
