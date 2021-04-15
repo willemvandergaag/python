@@ -22,13 +22,8 @@ def placeCoordinates(sensors):
 
     plt.imshow(img, extent=[0, 72, 0, 96])
     for i in sensors:
-        print(i)
-        plt.plot(sensors[i]['x'], sensors[i]['y'], 'rX', markersize = 12)
-        plt.annotate(i, # this is the text
-                    (sensors[i]['x'], sensors[i]['y']), # this is the point to label
-                    textcoords="offset points", # how to position the text
-                    xytext=(0,10), # distance from text to points (x,y)
-                    ha='center') # horizontal alignment can be left, right or center
+        if(sensors[i]['humans'] > 0):
+            plt.plot(sensors[i]['x'], sensors[i]['y'], 'rX', markersize = 12)
     plt.draw()
     plt.pause(0.0001)
     plt.clf()
@@ -48,20 +43,32 @@ sensors = {}
 def on_message(client, userdata, msg):
     payload = json.loads(msg.payload)
     global sensors
+    data = payload['data']
+    print(payload)
+    if (data['tempAlert'] > 0):
+        print("Temperature above 80 detected!")
 
-    x2 = map(float, payload['x'].split(','))
-    y2 = map(float, payload['y'].split(','))
+    if(data['humans']):
+        x = []
+        y = []
+        for cluster in data['clusters']:
+            x.append(cluster['x'])
+            y.append(cluster['y'])
+        sensors[data['sensor']] = {
+            'x': x,
+            'y': y,
+            'humans': data['humans']
+        }
 
-    sensors[payload['sensor']] = {
-        'x': [10, 20],
-        'y': [15, 30]
-    }
-        
+    else:
+        sensors[data['sensor']] = {
+            'x': 0,
+            'y': 0,
+            'humans': data['humans']
+        }
+
+    print(sensors)
     placeCoordinates(sensors)
-    
-    
-
-
  
 # Create an MQTT client and attach our routines to it.
 client = mqtt.Client()
