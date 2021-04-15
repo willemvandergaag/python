@@ -22,8 +22,8 @@ def placeCoordinates(sensors):
 
     plt.imshow(img, extent=[0, 72, 0, 96])
     for i in sensors:
-        if(sensors[i]['humans'] > 0):
-            plt.plot(sensors[i]['x'], sensors[i]['y'], 'rX', markersize = 12)
+        # if(sensors[i]['humans'] > 0):
+        plt.plot(sensors[i]['x'], sensors[i]['y'], 'rX', markersize = 12)
     plt.draw()
     plt.pause(0.0001)
     plt.clf()
@@ -48,26 +48,25 @@ def on_message(client, userdata, msg):
     if (data['tempAlert'] > 0):
         print("Temperature above 80 detected!")
 
-    if(data['humans']):
-        x = []
-        y = []
-        for cluster in data['clusters']:
-            x.append(cluster['x'])
-            y.append(cluster['y'])
-        sensors[data['sensor']] = {
-            'x': x,
-            'y': y,
-            'humans': data['humans']
+    # if(data['humans']):
+    x = []
+    y = []
+    for cluster in data['clusters']:
+        x.append(cluster['x'])
+        y.append(cluster['y'])
+    sensors[data['sensor']] = {
+        'x': x,
+        'y': y,
+        'humans': data['humans']
         }
 
-    else:
-        sensors[data['sensor']] = {
-            'x': 0,
-            'y': 0,
-            'humans': data['humans']
-        }
+    # else:
+    #     sensors[data['sensor']] = {
+    #         'x': 0,
+    #         'y': 0,
+    #         'humans': data['humans']
+    #     }
 
-    print(sensors)
     placeCoordinates(sensors)
  
 # Create an MQTT client and attach our routines to it.
