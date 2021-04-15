@@ -22,7 +22,6 @@ def placeCoordinates(sensors):
 
     plt.imshow(img, extent=[0, 72, 0, 96])
     for i in sensors:
-        # if(sensors[i]['humans'] > 0):
         plt.plot(sensors[i]['x'], sensors[i]['y'], 'rX', markersize = 12)
     plt.draw()
     plt.pause(0.0001)
@@ -59,13 +58,6 @@ def on_message(client, userdata, msg):
         'y': y,
         'humans': data['humans']
         }
-
-    # else:
-    #     sensors[data['sensor']] = {
-    #         'x': 0,
-    #         'y': 0,
-    #         'humans': data['humans']
-    #     }
 
     placeCoordinates(sensors)
  
