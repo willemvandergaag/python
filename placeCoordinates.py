@@ -10,8 +10,8 @@ def placeCoordinates(sensors):
     plt.imshow(img, extent=[0, roomX, 0, roomY])
     for i in range(1, numberOfSensors + 1):
         if sensors[i]['humans'] > 0:
-            x = sensors[i]['x'] * 3.5 + sensors[i]['offsetX']
-            y = sensors[i]['y'] * 4.8 + sensors[i]['offsetY']
+            x = sensors[i]['x']
+            y = sensors[i]['y'] 
             plt.plot(x, y, 'rX', markersize = 12)
     plt.draw()
     plt.pause(0.0001)
@@ -39,8 +39,8 @@ def on_message(client, userdata, msg):
     x = []
     y = []
     for cluster in data['clusters']:
-        x.append(cluster['x'])
-        y.append(cluster['y'])
+        x.append(cluster['x'] * 3.5 + sensors[data['sensor']]['offsetX'])
+        y.append(cluster['y'] * 4.8 + sensors[data['sensor']]['offsetY'])
 
     sensors[data['sensor']]['x'] = x
     sensors[data['sensor']]['y'] = y
@@ -66,9 +66,15 @@ numberOfSensors = int(input("Number of sensors? "))
 for i in range(1, numberOfSensors + 1):
     offsetX = int(input("X-offset sensor "+ str(i) + " in cm: "))
     offsetY = int(input("Y-offset sensor "+ str(i) + " in cm: "))
+    offsetX = offsetX - 75.6
+    offsetY = offsetY + 40.75
     sensors[i] = {
         'offsetX' : offsetX,
-        'offsetY' : offsetY
+        'offsetY' : offsetY,
+        'x' : [],
+        'y' : [],
+        'humans' : 0
+
     }
 
 client.connect("192.168.0.107", 1883)

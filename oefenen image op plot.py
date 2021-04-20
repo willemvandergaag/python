@@ -11,11 +11,11 @@ import math
 img = plt.imread("C:\\Users\\wille\\Desktop\\python\\map.jpg")
 
 while True:
-    xs = [120]
-    ys = [150]
+    xs = [100]
+    ys = [100]
     print("function")
     scale = 1
-    plt.imshow(img, extent=[0, 300*scale, 0, 460*scale])
+    plt.imshow(img, extent=[0, 300, 0, 460])
 
     plt.plot(xs, ys, 'rX', markersize=12)
 
