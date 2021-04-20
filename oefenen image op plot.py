@@ -14,8 +14,8 @@ while True:
     xs = [120]
     ys = [150]
     print("function")
-
-    plt.imshow(img, extent=[0, 240, 0, 320])
+    scale = 1
+    plt.imshow(img, extent=[0, 300*scale, 0, 460*scale])
 
     plt.plot(xs, ys, 'rX', markersize=12)
 

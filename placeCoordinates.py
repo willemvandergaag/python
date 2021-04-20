@@ -2,27 +2,17 @@ import paho.mqtt.client as mqtt
 import json
 import matplotlib.pyplot as plt
 import matplotlib.animation as animation
-
-
-import numpy as np
-import cv2, math
-
-alphax = 0
-alphay = 0
-betax = 0
-betay = 0
-xs = []
-ys = []
-
+import math
+sensors = {}
 
 def placeCoordinates(sensors):
-    alphaxImg = 24 - alphax
-    xs.append(alphaxImg + 36)
-    ys.append(alphay + 48)
 
-    plt.imshow(img, extent=[0, 72, 0, 96])
-    for i in sensors:
-        plt.plot(sensors[i]['x'], sensors[i]['y'], 'rX', markersize = 12)
+    plt.imshow(img, extent=[0, roomX, 0, roomY])
+    for i in range(1, numberOfSensors + 1):
+        if sensors[i]['humans'] > 0:
+            x = sensors[i]['x'] * 3.5 + sensors[i]['offsetX']
+            y = sensors[i]['y'] * 4.8 + sensors[i]['offsetY']
+            plt.plot(x, y, 'rX', markersize = 12)
     plt.draw()
     plt.pause(0.0001)
     plt.clf()
@@ -35,8 +25,6 @@ def on_connect(client, userdata, flags, rc):
     # Subscribing in on_connect() - if we lose the connection and
     # reconnect then subscriptions will be renewed.
     client.subscribe("17089689")
-
-sensors = {}
 
 # The callback for when a PUBLISH message is received from the server.
 def on_message(client, userdata, msg):
@@ -53,11 +41,12 @@ def on_message(client, userdata, msg):
     for cluster in data['clusters']:
         x.append(cluster['x'])
         y.append(cluster['y'])
-    sensors[data['sensor']] = {
-        'x': x,
-        'y': y,
-        'humans': data['humans']
-        }
+
+    sensors[data['sensor']]['x'] = x
+    sensors[data['sensor']]['y'] = y
+    sensors[data['sensor']]['humans'] = data['humans']
+
+    print(sensors)
 
     placeCoordinates(sensors)
  
@@ -66,6 +55,21 @@ client = mqtt.Client()
 client.on_connect = on_connect
 client.on_message = on_message
 
+global roomX
+global roomY
+roomX = int(input("Width of room in cm: "))
+roomY = int(input("Length of room in cm: "))
+
+global numberOfSensors
+numberOfSensors = int(input("Number of sensors? "))
+
+for i in range(1, numberOfSensors + 1):
+    offsetX = int(input("X-offset sensor "+ str(i) + " in cm: "))
+    offsetY = int(input("Y-offset sensor "+ str(i) + " in cm: "))
+    sensors[i] = {
+        'offsetX' : offsetX,
+        'offsetY' : offsetY
+    }
 
 client.connect("192.168.0.107", 1883)
 img = plt.imread("C:\\Users\\wille\\Desktop\\python\\map.jpg")
@@ -75,3 +79,4 @@ img = plt.imread("C:\\Users\\wille\\Desktop\\python\\map.jpg")
 # https://github.com/eclipse/paho.mqtt.python
 # for information on how to use other loop*() functions
 client.loop_forever()
+# 300 x 460
