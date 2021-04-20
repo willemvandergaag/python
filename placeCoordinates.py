@@ -39,9 +39,12 @@ def on_message(client, userdata, msg):
     x = []
     y = []
     for cluster in data['clusters']:
-        x.append(cluster['x'] * 3.5 + sensors[data['sensor']]['offsetX'])
-        y.append(cluster['y'] * 4.8 + sensors[data['sensor']]['offsetY'])
+        # the location is the offset + the number of pixels - 1 * 4.8 (4.8 is the width of 1 pixel)
+        x.append(sensors[data['sensor']]['offsetX'] + (cluster['x'] - 1) * 4.8)
+        # the location is the offset - the number of pixels - 1 * 3.5 (3.5 is the width of 1 pixel)
+        y.append(sensors[data['sensor']]['offsetY'] - (cluster['y'] - 1) * 3.5)
 
+    # Add data to dictionary of sensor
     sensors[data['sensor']]['x'] = x
     sensors[data['sensor']]['y'] = y
     sensors[data['sensor']]['humans'] = data['humans']
@@ -64,8 +67,11 @@ global numberOfSensors
 numberOfSensors = int(input("Number of sensors? "))
 
 for i in range(1, numberOfSensors + 1):
-    offsetX = int(input("X-offset sensor "+ str(i) + " in cm: "))
-    offsetY = int(input("Y-offset sensor "+ str(i) + " in cm: "))
+    offsetX = int(input("X-offset sensor " + str(i) + " in cm: "))
+    offsetY = int(input("Y-offset sensor " + str(i) + " in cm: "))
+    # offset is to sensor, coordinates start at the top left of a sensor
+    # The field visible to the sensor is 1.56 x 0.84
+    # the center of the first pixel is 75.6 to the left an 40.75 to the top
     offsetX = offsetX - 75.6
     offsetY = offsetY + 40.75
     sensors[i] = {
