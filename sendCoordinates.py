@@ -12,7 +12,7 @@ import paho.mqtt.publish as publish
 import json
 
 i2c = busio.I2C(board.SCL, board.SDA, frequency=1000000)
-sensor = 2
+sensor = 1
 datastringOld = ''
 
 mlx = adafruit_mlx90640.MLX90640(i2c)
@@ -22,8 +22,6 @@ print([hex(i) for i in mlx.serial_number])
 mlx.refresh_rate = adafruit_mlx90640.RefreshRate.REFRESH_8_HZ
 
 frame = [0] * 768
-
-
 
 while True:
     stamp = time.monotonic()
@@ -39,14 +37,19 @@ while True:
     for h in range(24):
         for w in range(32):
             if frame[h * 32 + w] > 80:
+                # for high temperatures
                 highTemp = 1
-            if frame[h * 32 + w] < 24 or frame[h * 32 + w] > 31:
+            if frame[h * 32 + w] < 26 or frame[h * 32 + w] > 31:
+                # human is between 26 and 31 degrees
+                # if other temperature, not relevant
                 frame[h * 32 + w] = 0
             else:
                 frame[h * 32 + w] = 1
     frameEdit = frame
+    # round of numbers, place in array of 24 x 32
     frameEdit = [int(round(num)) for num in frameEdit]
     frameEdit = np.reshape(frameEdit, (24, 32))
+    
     #make cluster
     lw, num = measurements.label(frameEdit)   
     
@@ -54,38 +57,39 @@ while True:
     clusters = {} # empty clusters object
     row_num = 0 # row number starts at
 
-    # zet van van elk getal een {x,y} in de bijbehorende array
+    # place a x and y of every number in the array
     for row in coordinates:
-        cel_num = 0 # cel_num weer resetten bij een nieuwe row
+        cel_num = 0 # cel_num reset for new row
         for cel in row:
-            # 0 telt niet mee, dus negeren
-            # Als hij al bestaat, dan +1 anders =1
+            # 0 doesnt have a value
+            # if it exists, +1 otherwise =1
             if cel > 0:
                 if str(cel) not in clusters:
                     clusters[str(cel)] = []
                 clusters[str(cel)].append({'x': cel_num, 'y': row_num})
-            cel_num += 1 # we gaan naar de volgende cel
-        row_num += 1 # we gaan naar de volgende row
+            cel_num += 1 # next cel
+        row_num += 1 # next row
 
-    # loop door elk "clusternummer" heen
+    # loop through every "clusternumber" 
     for cluster_num, cluster_val in clusters.items():
-        all_x = [] # per cluster een lege array
-        all_y = [] # per cluster een lege arrayS
+        all_x = [] # every cluster an empty array
+        all_y = [] # every cluster an empty array
         for element in cluster_val:
-            all_x.append(element['x']) # voeg alle x'en toe aan een eigen array
-            all_y.append(element['y']) # voeg alle y'en toe aan een eigen array
+            all_x.append(element['x']) # add all x's to array
+            all_y.append(element['y']) # add all y's to array
 
-        x_min = min(all_x) # minimale x
-        x_max = max(all_x) # maximale x
-        y_min = min(all_y) # minimale y
-        y_max = max(all_y) # maximale y
+        x_min = min(all_x) # min x
+        x_max = max(all_x) # max x
+        y_min = min(all_y) # min y
+        y_max = max(all_y) # max y
 
-        x_gem = (x_min + x_max) / 2 # bereken de gemiddelde x
-        y_gem = (y_min + y_max) / 2 # bereken de gemiddelde y
+        x_gem = 32 - ((x_min + x_max) / 2) # average x
+        y_gem = (y_min + y_max) / 2 # average y
 
+        # every pixel is 1
         area = len(all_x)
-        
-        if(area > 45 and area < 80):
+
+        if(area > 45):
             xc = np.append(xc, x_gem)
             yc = np.append(yc, y_gem)
             humansDetected += 1
@@ -110,11 +114,5 @@ while True:
     if(datastringOld != datastring):
         publish.single("17089689", datastring, hostname="192.168.0.107")
         print("Sensor read and sent in %0.2f s" % (time.monotonic() - stamp))
+        print(datastring)
     datastringOld = datastring
-    
-    
-       
-    time.sleep(1)
-    
-
-

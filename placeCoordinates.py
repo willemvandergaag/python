@@ -80,11 +80,10 @@ for i in range(1, numberOfSensors + 1):
         'x' : [],
         'y' : [],
         'humans' : 0
-
     }
 
 client.connect("192.168.0.107", 1883)
-img = plt.imread("C:\\Users\\wille\\Desktop\\python\\map.jpg")
+img = plt.imread("C:\\Users\\wille\\Desktop\\python\\maptoscale.jpg")
  
 # Process network traffic and dispatch callbacks. This will also handle
 # reconnecting. Check the documentation at
