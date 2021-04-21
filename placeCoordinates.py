@@ -3,6 +3,7 @@ import json
 import matplotlib.pyplot as plt
 import matplotlib.animation as animation
 import math
+# test
 sensors = {}
 maxDifference = 30.0
 
