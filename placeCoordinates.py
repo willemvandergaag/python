@@ -4,19 +4,34 @@ import matplotlib.pyplot as plt
 import matplotlib.animation as animation
 import math
 sensors = {}
+maxDifference = 30.0
 
 def placeCoordinates(sensors):
-
+    
     plt.imshow(img, extent=[0, roomX, 0, roomY])
+    temp_amount_plotted = 0
     for i in range(1, numberOfSensors + 1):
         if sensors[i]['humans'] > 0:
+            temp_amount_plotted = temp_amount_plotted + len(sensors[i]['x'])
             x = sensors[i]['x']
             y = sensors[i]['y'] 
             plt.plot(x, y, 'rX', markersize = 12)
+    if temp_amount_plotted > 1:
+        print(sensors)
+        print('-----------------------------------------------------------------------------------------')
     plt.draw()
     plt.pause(0.0001)
     plt.clf()
     updatedAlpha = 0
+
+def filterCoordinates(coordinate, x, y, maxDifference):
+    if (
+        (coordinate['x'] <= (x + maxDifference) and coordinate['x'] >= (x - maxDifference)) and
+        (coordinate['y'] <= (y + maxDifference) and coordinate['y'] >= (y - maxDifference))
+    ):
+        return False
+    else:
+        return True
 
 # The callback for when the client receives a CONNACK response from the server.
 def on_connect(client, userdata, flags, rc):
@@ -31,25 +46,41 @@ def on_message(client, userdata, msg):
     payload = json.loads(msg.payload)
     global sensors
     data = payload['data']
-    print(payload)
+    #print(payload)
     if (data['tempAlert'] > 0):
         print("Temperature above 80 detected!")
 
-    # if(data['humans']):
-    x = []
-    y = []
+    xList = []
+    yList = []
+
+    for j in range(1, numberOfSensors + 1):
+        sensor = sensors[j]
+        plottedXY = []
+
+        for i in range(0, len(sensor['x'])):
+            plottedXY.append({
+                'x': sensor['x'][i],
+                'y': sensor['y'][i]
+            })
+
     for cluster in data['clusters']:
-        # the location is the offset + the number of pixels - 1 * 4.8 (4.8 is the width of 1 pixel)
-        x.append(sensors[data['sensor']]['offsetX'] + (cluster['x'] - 1) * 4.8)
-        # the location is the offset - the number of pixels - 1 * 3.5 (3.5 is the width of 1 pixel)
-        y.append(sensors[data['sensor']]['offsetY'] - (cluster['y'] - 1) * 3.5)
+        x = sensors[data['sensor']]['offsetX'] + (cluster['x'] - 1) * 4.8
+        y = sensors[data['sensor']]['offsetY'] - (cluster['y'] - 1) * 3.5
+        
+        filtered = list(filter(lambda c: filterCoordinates(c, x, y, maxDifference), plottedXY))
 
+        if len(plottedXY) == len(filtered):
+            xList.append(x)
+            yList.append(y)
+            print(plottedXY)
+            # print('plotted')
+
+            # print('found double')
+    
     # Add data to dictionary of sensor
-    sensors[data['sensor']]['x'] = x
-    sensors[data['sensor']]['y'] = y
+    sensors[data['sensor']]['x'] = xList
+    sensors[data['sensor']]['y'] = yList
     sensors[data['sensor']]['humans'] = data['humans']
-
-    print(sensors)
 
     placeCoordinates(sensors)
  
@@ -60,11 +91,15 @@ client.on_message = on_message
 
 global roomX
 global roomY
-roomX = int(input("Width of room in cm: "))
-roomY = int(input("Length of room in cm: "))
+# roomX = int(input("Width of room in cm: "))
+# roomY = int(input("Length of room in cm: "))
+roomX = 300
+roomY = 460
 
 global numberOfSensors
-numberOfSensors = int(input("Number of sensors? "))
+# numberOfSensors = int(input("Number of sensors? "))
+
+numberOfSensors = 2
 
 for i in range(1, numberOfSensors + 1):
     offsetX = int(input("X-offset sensor " + str(i) + " in cm: "))
