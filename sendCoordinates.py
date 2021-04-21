@@ -12,7 +12,7 @@ import paho.mqtt.publish as publish
 import json
 
 i2c = busio.I2C(board.SCL, board.SDA, frequency=1000000)
-sensor = 1
+sensor = 2
 datastringOld = ''
 
 mlx = adafruit_mlx90640.MLX90640(i2c)
@@ -22,6 +22,8 @@ print([hex(i) for i in mlx.serial_number])
 mlx.refresh_rate = adafruit_mlx90640.RefreshRate.REFRESH_8_HZ
 
 frame = [0] * 768
+
+
 
 while True:
     stamp = time.monotonic()
@@ -37,19 +39,15 @@ while True:
     for h in range(24):
         for w in range(32):
             if frame[h * 32 + w] > 80:
-                # for high temperatures
                 highTemp = 1
-            if frame[h * 32 + w] < 26 or frame[h * 32 + w] > 31:
-                # human is between 26 and 31 degrees
-                # if other temperature, not relevant
+            if frame[h * 32 + w] < 24 or frame[h * 32 + w] > 31:
                 frame[h * 32 + w] = 0
             else:
                 frame[h * 32 + w] = 1
     frameEdit = frame
-    # round of numbers, place in array of 24 x 32
     frameEdit = [int(round(num)) for num in frameEdit]
     frameEdit = np.reshape(frameEdit, (24, 32))
-    
+    #print(frameEdit)
     #make cluster
     lw, num = measurements.label(frameEdit)   
     
@@ -83,12 +81,14 @@ while True:
         y_min = min(all_y) # min y
         y_max = max(all_y) # max y
 
-        x_gem = 32 - ((x_min + x_max) / 2) # average x
+        x_gem = 32 - ((x_min + x_max) / 2) # average X
         y_gem = (y_min + y_max) / 2 # average y
 
         # every pixel is 1
         area = len(all_x)
-
+        
+        #print(area)
+        
         if(area > 45):
             xc = np.append(xc, x_gem)
             yc = np.append(yc, y_gem)
