@@ -7,18 +7,53 @@ sensors = {}
 maxDifference = 30.0
 
 def placeCoordinates(sensors):
-    
     plt.imshow(img, extent=[0, roomX, 0, roomY])
-    temp_amount_plotted = 0
+    all_xy = []
+    # Loop door alle sensoren heen
+    # We eindigen uiteindelijk met een grote lijst met
+    # alle x en y's van alle sensoren in variable all_xy
     for i in range(1, numberOfSensors + 1):
-        if sensors[i]['humans'] > 0:
-            temp_amount_plotted = temp_amount_plotted + len(sensors[i]['x'])
-            x = sensors[i]['x']
-            y = sensors[i]['y'] 
-            plt.plot(x, y, 'rX', markersize = 12)
-    if temp_amount_plotted > 1:
-        print(sensors)
-        print('-----------------------------------------------------------------------------------------')
+        # Zet alle bijbehorende x en y's in een object
+        for j in range(0, len(sensors[i]['x'])):
+            all_xy.append({
+                'x': sensors[i]['x'][j],
+                'y': sensors[i]['y'][j]
+            })
+
+    # Test of een van de andere coordinaten teveel op deze lijkt
+    # zo ja, gooi zichzelf eruit
+    for coordinaat in all_xy:
+        temp_all_xy = all_xy.copy()
+        temp_all_xy.remove(coordinaat) # Verwijder zichzelf
+        for test_coordinaat in temp_all_xy:
+            if (
+                (
+                    test_coordinaat['x'] <= (coordinaat['x'] + maxDifference) and
+                    test_coordinaat['x'] >= (coordinaat['x'] - maxDifference)
+                ) and (
+                    test_coordinaat['y'] <= (coordinaat['y'] + maxDifference) and
+                    test_coordinaat['y'] >= (coordinaat['y'] - maxDifference)
+                )
+            ):
+                # print(all_xy)
+                # print(coordinaat)
+                all_xy.remove(coordinaat)
+    
+    plotX = []
+    plotY = []
+
+    
+    # Ga weer terug naar een list waar plot() mee om kan gaan
+    for coordinaat in all_xy:
+        plotX.append(coordinaat['x'])
+        plotY.append(coordinaat['y'])
+
+    if len(plotX) > 1 :
+        print(all_xy)
+    # Als de list niet leeg is, plot dan x en y
+    if(len(plotX) > 0 and len(plotY) > 0):
+        plt.plot(plotX, plotY, 'rX', markersize = 12)
+
     plt.draw()
     plt.pause(0.0001)
     plt.clf()
@@ -50,36 +85,18 @@ def on_message(client, userdata, msg):
     if (data['tempAlert'] > 0):
         print("Temperature above 80 detected!")
 
-    xList = []
-    yList = []
-
-    for j in range(1, numberOfSensors + 1):
-        sensor = sensors[j]
-        plottedXY = []
-
-        for i in range(0, len(sensor['x'])):
-            plottedXY.append({
-                'x': sensor['x'][i],
-                'y': sensor['y'][i]
-            })
+    x = []
+    y = []
 
     for cluster in data['clusters']:
-        x = sensors[data['sensor']]['offsetX'] + (cluster['x'] - 1) * 4.8
-        y = sensors[data['sensor']]['offsetY'] - (cluster['y'] - 1) * 3.5
-        
-        filtered = list(filter(lambda c: filterCoordinates(c, x, y, maxDifference), plottedXY))
+        # the location is the offset + the number of pixels - 1 * 4.8 (4.8 is the width of 1 pixel)
+        x.append(sensors[data['sensor']]['offsetX'] + (cluster['x'] - 1) * 4.8)
+        # the location is the offset - the number of pixels - 1 * 3.5 (3.5 is the width of 1 pixel)
+        y.append(sensors[data['sensor']]['offsetY'] - (cluster['y'] - 1) * 3.5)
 
-        if len(plottedXY) == len(filtered):
-            xList.append(x)
-            yList.append(y)
-            print(plottedXY)
-            # print('plotted')
-
-            # print('found double')
-    
     # Add data to dictionary of sensor
-    sensors[data['sensor']]['x'] = xList
-    sensors[data['sensor']]['y'] = yList
+    sensors[data['sensor']]['x'] = x
+    sensors[data['sensor']]['y'] = y
     sensors[data['sensor']]['humans'] = data['humans']
 
     placeCoordinates(sensors)
