@@ -3,70 +3,82 @@ import json
 import matplotlib.pyplot as plt
 import matplotlib.animation as animation
 import math
+
+from matplotlib.patches import Patch
+from matplotlib.lines import Line2D
+
 sensors = {}
 maxDifference = 30.0
 
 def placeCoordinates(sensors):
     plt.imshow(img, extent=[0, roomX, 0, roomY])
-    all_xy = []
-    # Loop door alle sensoren heen
-    # We eindigen uiteindelijk met een grote lijst met
-    # alle x en y's van alle sensoren in variable all_xy
+
+    checkCoordinates()    
+    
+    plt.plot(sensorLocationX, sensorLocationY, 'r.', markersize = 8)
+
+    # If the list is not empty, plot x and y
+    if(len(plotX) > 0 and len(plotY) > 0):
+        plt.plot(plotX, plotY, 'bX', markersize = 12)
+
+    for i_x, i_y in zip(plotX, plotY):
+        plt.text(i_x, i_y, '({}, {})'.format(i_x, i_y))
+
+    # legend containing symbols
+    legend_elements = [Line2D([0], [0], marker='X', color='w', label='Person',
+                        markerfacecolor='b', markersize=15),
+                    Line2D([0], [0], marker='.', color='w', label='Sensor',
+                            markerfacecolor='r', markersize=15)]
+    
+    plt.legend(handles=legend_elements, title='Symbols', bbox_to_anchor=(1.05, 1), loc='upper left')
+        
+    plt.draw()
+    plt.pause(0.0001)
+    plt.clf()
+
+def checkCoordinates():
+    # Loop through all sensors
+    # We finish with a list with
+    # all x's and y's of all sensors
+    allXY = []
     for i in range(1, numberOfSensors + 1):
-        # Zet alle bijbehorende x en y's in een object
+        # Put all x's and y's in an object
         for j in range(0, len(sensors[i]['x'])):
-            all_xy.append({
+            allXY.append({
                 'x': sensors[i]['x'][j],
                 'y': sensors[i]['y'][j]
             })
 
-    # Test of een van de andere coordinaten teveel op deze lijkt
-    # zo ja, gooi zichzelf eruit
-    for coordinaat in all_xy:
-        temp_all_xy = all_xy.copy()
-        temp_all_xy.remove(coordinaat) # Verwijder zichzelf
-        for test_coordinaat in temp_all_xy:
+    # Test if coordinate is close to other coordinates
+    # if yes, remove
+    for coordinate in allXY:
+        tempAllXY = allXY.copy()
+        tempAllXY.remove(coordinate) # Remove itself
+        for test_coordinaat in tempAllXY:
             if (
                 (
-                    test_coordinaat['x'] <= (coordinaat['x'] + maxDifference) and
-                    test_coordinaat['x'] >= (coordinaat['x'] - maxDifference)
+                    test_coordinaat['x'] <= (coordinate['x'] + maxDifference) and
+                    test_coordinaat['x'] >= (coordinate['x'] - maxDifference)
                 ) and (
-                    test_coordinaat['y'] <= (coordinaat['y'] + maxDifference) and
-                    test_coordinaat['y'] >= (coordinaat['y'] - maxDifference)
+                    test_coordinaat['y'] <= (coordinate['y'] + maxDifference) and
+                    test_coordinaat['y'] >= (coordinate['y'] - maxDifference)
                 )
             ):
-                # print(all_xy)
-                # print(coordinaat)
-                all_xy.remove(coordinaat)
-    
+            # if there is overlap with another coordinate, remove
+                allXY.remove(coordinate)
+
+    global plotX, plotY
+
     plotX = []
     plotY = []
 
-    
-    # Ga weer terug naar een list waar plot() mee om kan gaan
-    for coordinaat in all_xy:
-        plotX.append(coordinaat['x'])
-        plotY.append(coordinaat['y'])
+    # Put in a list that plot() can handle
+    for coordinate in allXY:
+        plotX.append(round(coordinate['x'], 1))
+        plotY.append(round(coordinate['y'], 1))
 
-    if len(plotX) > 1 :
-        print(all_xy)
-    # Als de list niet leeg is, plot dan x en y
-    if(len(plotX) > 0 and len(plotY) > 0):
-        plt.plot(plotX, plotY, 'rX', markersize = 12)
-
-    plt.draw()
-    plt.pause(0.0001)
-    plt.clf()
-    updatedAlpha = 0
-
-def filterCoordinates(coordinate, x, y, maxDifference):
-    if (
-        (coordinate['x'] <= (x + maxDifference) and coordinate['x'] >= (x - maxDifference)) and
-        (coordinate['y'] <= (y + maxDifference) and coordinate['y'] >= (y - maxDifference))
-    ):
-        return False
-    else:
-        return True
+        # if len(plotX) > 1 :
+    #     print(allXY)
 
 # The callback for when the client receives a CONNACK response from the server.
 def on_connect(client, userdata, flags, rc):
@@ -106,26 +118,38 @@ client = mqtt.Client()
 client.on_connect = on_connect
 client.on_message = on_message
 
+# Read config file
+f = open("C:\\Users\\wille\\Desktop\\python\\config.json")
+data = json.load(f)
+# Read room size
 global roomX
 global roomY
-# roomX = int(input("Width of room in cm: "))
-# roomY = int(input("Length of room in cm: "))
-roomX = 300
-roomY = 460
-
+roomX = data['Room width']
+roomY = data['Room length']
+# Read number of sensors
 global numberOfSensors
-# numberOfSensors = int(input("Number of sensors? "))
+numberOfSensors = data['Number of sensors']
 
-numberOfSensors = 2
+# numberOfSensors = 2
+global sensorLocationX
+global sensorLocationY
+
+sensorLocationX = []
+sensorLocationY = []
 
 for i in range(1, numberOfSensors + 1):
-    offsetX = int(input("X-offset sensor " + str(i) + " in cm: "))
-    offsetY = int(input("Y-offset sensor " + str(i) + " in cm: "))
+    # read sensor locations
+    locationX = data['locations'][i - 1]['x']
+    locationY = data['locations'][i - 1]['y']
+
+    sensorLocationX.append(locationX)
+    sensorLocationY.append(locationY)
+
     # offset is to sensor, coordinates start at the top left of a sensor
     # The field visible to the sensor is 1.56 x 0.84
     # the center of the first pixel is 75.6 to the left an 40.75 to the top
-    offsetX = offsetX - 75.6
-    offsetY = offsetY + 40.75
+    offsetX = locationX - 75.6
+    offsetY = locationY + 40.75
     sensors[i] = {
         'offsetX' : offsetX,
         'offsetY' : offsetY,
@@ -133,6 +157,8 @@ for i in range(1, numberOfSensors + 1):
         'y' : [],
         'humans' : 0
     }
+
+    f.close()
 
 client.connect("192.168.0.107", 1883)
 img = plt.imread("C:\\Users\\wille\\Desktop\\python\\maptoscale.jpg")

@@ -1,0 +1,16 @@
+{
+    "Room width" : 300,
+    "Room length" : 460,
+    "Number of sensors" : 2,
+    "locations" : [
+        {
+        "id" : 1,
+        "x" : 100,
+        "y" : 340
+        },
+        {
+        "id" : 2,
+        "x" : 205,
+        "y" : 340
+        }]        
+} 

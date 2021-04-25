@@ -2,7 +2,8 @@ import paho.mqtt.client as mqtt
 import json
 import matplotlib.pyplot as plt
 import matplotlib.animation as animation
-
+from matplotlib.patches import Patch
+from matplotlib.lines import Line2D
 
 import numpy as np
 import cv2
@@ -30,6 +31,13 @@ while True:
 
     # plt.xlim([0, 24])
     # plt.ylim([0, 32])
+
+    legend_elements = [Line2D([0], [0], marker='X', color='w', label='person',
+                          markerfacecolor='b', markersize=15),
+                    Line2D([0], [0], marker='.', color='w', label='sensor',
+                          markerfacecolor='r', markersize=15)]
+    
+    plt.legend(handles=legend_elements, title='Symbols', bbox_to_anchor=(1.05, 1), loc='upper left')
     plt.draw()
     plt.pause(0.0001)
     plt.clf()
