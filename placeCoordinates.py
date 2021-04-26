@@ -21,8 +21,18 @@ def placeCoordinates(sensors):
     if(len(plotX) > 0 and len(plotY) > 0):
         plt.plot(plotX, plotY, 'bX', markersize = 12)
 
+    plt.text(-220, 445, 'Locations of people', weight='bold')
+
+    offsetText = 1
+
+    # place coordinates next to map
     for i_x, i_y in zip(plotX, plotY):
-        plt.text(i_x, i_y, '({}, {})'.format(i_x, i_y))
+        plt.text(-220, 445 - (offsetText * 20), str(offsetText) + ': ' + '({}, {})'.format(i_x, i_y))
+        offsetText = offsetText + 1
+
+    # place coordinates next to X
+    # for i_x, i_y in zip(plotX, plotY):
+    #     plt.text(i_x, i_y, '({}, {})'.format(i_x, i_y))
 
     # legend containing symbols
     legend_elements = [Line2D([0], [0], marker='X', color='w', label='Person',
