@@ -3,6 +3,8 @@ import json
 import matplotlib.pyplot as plt
 import matplotlib.animation as animation
 import math
+import numpy as np
+import cv2
 
 from matplotlib.patches import Patch
 from matplotlib.lines import Line2D
@@ -10,7 +12,10 @@ from matplotlib.lines import Line2D
 sensors = {}
 maxDifference = 30.0
 
+
 def placeCoordinates(sensors):
+    fig = plt.figure()
+
     plt.imshow(img, extent=[0, roomX, 0, roomY])
 
     checkCoordinates()    
@@ -42,9 +47,19 @@ def placeCoordinates(sensors):
     
     plt.legend(handles=legend_elements, title='Symbols', bbox_to_anchor=(1.05, 1), loc='upper left')
         
-    plt.draw()
-    plt.pause(0.0001)
-    plt.clf()
+    fig.canvas.draw()
+
+    cvImg = np.fromstring(fig.canvas.tostring_rgb(), dtype=np.uint8,
+                sep='')
+    cvImg  = cvImg.reshape(fig.canvas.get_width_height()[::-1] + (3,))
+
+    # img is rgb, convert to opencv's default bgr
+    cvImg = cv2.cvtColor(cvImg,cv2.COLOR_RGB2BGR)
+
+    # display image with opencv or any operation you like
+    cv2.imshow("plot",cvImg)
+
+    cv2.waitKey(1)
 
 def checkCoordinates():
     # Loop through all sensors
@@ -109,18 +124,36 @@ def on_message(client, userdata, msg):
 
     x = []
     y = []
+
+    heatmap = []
     
     for cluster in data['clusters']:
-        print(cluster['coordinates']['x'])
         # the location is the offset + the number of pixels - 1 * 4.8 (4.8 is the width of 1 pixel)
         x.append(sensors[data['sensor']]['offsetX'] + (cluster['coordinates']['x'] - 1) * 4.8)
         # the location is the offset - the number of pixels - 1 * 3.5 (3.5 is the width of 1 pixel)
         y.append(sensors[data['sensor']]['offsetY'] - (cluster['coordinates']['y'] - 1) * 3.5)
 
+        heatmap.append(cluster['heatmaps'])
+        # for heatmaps in cluster['heatmaps']:
+        #     print(heatmap)
+        #     heatmap.append([
+        #         {
+        #             'settings': {
+        #                 'xMax' : heatmaps['settings']['xMax'],
+        #                 'yMax' : heatmaps['settings']['yMax']
+        #             }, 
+        #             'temps' : heatmaps['heatmap']
+        #         }
+        #     ])
+        
+
     # Add data to dictionary of sensor
     sensors[data['sensor']]['x'] = x
     sensors[data['sensor']]['y'] = y
     sensors[data['sensor']]['humans'] = data['humans']
+    sensors[data['sensor']]['heatmap'] = heatmap
+
+    print(sensors)
 
     placeCoordinates(sensors)
  
@@ -166,7 +199,16 @@ for i in range(1, numberOfSensors + 1):
         'offsetY' : offsetY,
         'x' : [],
         'y' : [],
-        'humans' : 0
+        'humans' : 0,
+        'heatmap' : [
+            {
+                'settings': {
+                    'xMax' : 0,
+                    'yMax' : 0
+                }, 
+                'temps' : []
+            }
+        ]
     }
 
     f.close()
