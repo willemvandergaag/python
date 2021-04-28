@@ -21,7 +21,7 @@ def placeCoordinates(sensors):
     if(len(plotX) > 0 and len(plotY) > 0):
         plt.plot(plotX, plotY, 'bX', markersize = 12)
 
-    plt.text(-220, 445, 'Locations of people', weight='bold')
+    plt.text(-250, 445, 'Locations of people', weight='bold')
 
     offsetText = 1
 
@@ -109,12 +109,13 @@ def on_message(client, userdata, msg):
 
     x = []
     y = []
-
+    
     for cluster in data['clusters']:
+        print(cluster['coordinates']['x'])
         # the location is the offset + the number of pixels - 1 * 4.8 (4.8 is the width of 1 pixel)
-        x.append(sensors[data['sensor']]['offsetX'] + (cluster['x'] - 1) * 4.8)
+        x.append(sensors[data['sensor']]['offsetX'] + (cluster['coordinates']['x'] - 1) * 4.8)
         # the location is the offset - the number of pixels - 1 * 3.5 (3.5 is the width of 1 pixel)
-        y.append(sensors[data['sensor']]['offsetY'] - (cluster['y'] - 1) * 3.5)
+        y.append(sensors[data['sensor']]['offsetY'] - (cluster['coordinates']['y'] - 1) * 3.5)
 
     # Add data to dictionary of sensor
     sensors[data['sensor']]['x'] = x
