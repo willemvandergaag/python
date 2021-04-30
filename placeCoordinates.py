@@ -37,10 +37,6 @@ def placeCoordinates(sensors):
         plt.text(-220, 445 - (offsetText * 20), str(offsetText) + ': ' + '({}, {})'.format(i_x, i_y))
         offsetText = offsetText + 1
 
-    # place coordinates next to X
-    # for i_x, i_y in zip(plotX, plotY):
-    #     plt.text(i_x, i_y, '({}, {})'.format(i_x, i_y))
-
     # legend containing symbols
     legend_elements = [Line2D([0], [0], marker='X', color='w', label='Person',
                         markerfacecolor='b', markersize=15),
@@ -65,22 +61,41 @@ def placeCoordinates(sensors):
 
 
 def createHeatmap():
-    heatmapComplete = [21] * (300 * 460)
-    heatmapComplete = np.matrix(heatmapComplete)
-    heatmapComplete = heatmapComplete.reshape(460, 300)
+    global heatmapArray
+    heatmapArray = [20] * (300 * 460)
+    heatmapArray = np.asarray(heatmapArray)
+    heatmapArray = heatmapArray.reshape(460, 300)
 
-    allHeatmaps = []
+    # print(heatmapArray.shape)
 
-    for i in range(1, numberOfSensors + 1):
-        print(sensors[i])
-        for j in range(0, len(sensors[i]['heatmaps'])):
-            allHeatmaps.append({
-            'xSize': sensors[i]['heatmaps'][j]['settings']['xSize'],
-            'ySize': sensors[i]['heatmaps'][j]['settings']['ySize'],
-            'temps':  sensors[i]['heatmaps'][j]['temps']
-            })
-            
-           
+    # print(heatmapArray[0][90])
+
+    for i in range(0, len(temps)):
+        startX = round(plotX[i]) - (xSize[i] / 2)
+        startY = 460 - (round(plotY[i]) + (ySize[i] / 2))
+
+        resizeTemp = temps[i]
+        resizeTemp = np.array(resizeTemp)
+        resizeTemp = resizeTemp.reshape(ySize[i], xSize[i])
+
+        for x in range(0, xSize[i]):
+            for y in range(0, ySize[i]):
+                heatmapArray[int(startY + y)][int(startX + x)] = resizeTemp[y][x]
+
+    # find min value, subtract this from all values
+    minValue = math.floor(np.amin(heatmapArray))
+    maxValue = math.ceil(np.amax(heatmapArray))
+    heatmapComplete = heatmapArray - minValue
+
+    # Now scaled to 0 - 255
+    heatmapComplete = heatmapComplete * 255/ (maxValue - minValue)
+
+    # apply colormap
+    imgAGray = heatmapComplete.astype(np.uint8)
+    imgA = cv2.applyColorMap(imgAGray, cv2.COLORMAP_JET)
+
+    cv2.imshow('image', imgA)
+
 
 
 
@@ -118,15 +133,27 @@ def checkCoordinates():
             # if there is overlap with another coordinate, remove
                 allXY.remove(coordinate)
 
-    global plotX, plotY
+    global plotX, plotY, xSize, ySize, temps
 
     plotX = []
     plotY = []
+    xSize = []
+    ySize = []
+    temps = []
 
     # Put in a list that plot() can handle
     for coordinate in allXY:
         plotX.append(round(coordinate['x'], 1))
         plotY.append(round(coordinate['y'], 1))
+        xSize.append(coordinate['xSize'])
+        ySize.append(coordinate['ySize'])
+        temps.append(coordinate['temps'])
+
+        # print(plotX)
+        # print(plotY)
+        # print(xSize)
+        # print(ySize)
+        # print(temps)
 
 
 # The callback for when the client receives a CONNACK response from the server.
@@ -140,7 +167,6 @@ def on_connect(client, userdata, flags, rc):
 # The callback for when a PUBLISH message is received from the server.
 def on_message(client, userdata, msg):
     payload = json.loads(msg.payload)
-
     global sensors
     data = payload['data']
     #print(payload)
