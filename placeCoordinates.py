@@ -19,6 +19,8 @@ def placeCoordinates(sensors):
     plt.imshow(img, extent=[0, roomX, 0, roomY])
 
     checkCoordinates()    
+
+    createHeatmap()
     
     plt.plot(sensorLocationX, sensorLocationY, 'r.', markersize = 8)
 
@@ -61,6 +63,27 @@ def placeCoordinates(sensors):
 
     cv2.waitKey(1)
 
+
+def createHeatmap():
+    heatmapComplete = [21] * (300 * 460)
+    heatmapComplete = np.matrix(heatmapComplete)
+    heatmapComplete = heatmapComplete.reshape(460, 300)
+
+    allHeatmaps = []
+
+    for i in range(1, numberOfSensors + 1):
+        print(sensors[i])
+        for j in range(0, len(sensors[i]['heatmaps'])):
+            allHeatmaps.append({
+            'xSize': sensors[i]['heatmaps'][j]['settings']['xSize'],
+            'ySize': sensors[i]['heatmaps'][j]['settings']['ySize'],
+            'temps':  sensors[i]['heatmaps'][j]['temps']
+            })
+            
+           
+
+
+
 def checkCoordinates():
     # Loop through all sensors
     # We finish with a list with
@@ -71,7 +94,10 @@ def checkCoordinates():
         for j in range(0, len(sensors[i]['x'])):
             allXY.append({
                 'x': sensors[i]['x'][j],
-                'y': sensors[i]['y'][j]
+                'y': sensors[i]['y'][j],
+                'xSize': sensors[i]['heatmaps'][j]['settings']['xSize'],
+                'ySize': sensors[i]['heatmaps'][j]['settings']['ySize'],
+                'temps':  sensors[i]['heatmaps'][j]['temps']
             })
 
     # Test if coordinate is close to other coordinates
@@ -102,8 +128,6 @@ def checkCoordinates():
         plotX.append(round(coordinate['x'], 1))
         plotY.append(round(coordinate['y'], 1))
 
-        # if len(plotX) > 1 :
-    #     print(allXY)
 
 # The callback for when the client receives a CONNACK response from the server.
 def on_connect(client, userdata, flags, rc):
@@ -116,6 +140,7 @@ def on_connect(client, userdata, flags, rc):
 # The callback for when a PUBLISH message is received from the server.
 def on_message(client, userdata, msg):
     payload = json.loads(msg.payload)
+
     global sensors
     data = payload['data']
     #print(payload)
@@ -133,27 +158,14 @@ def on_message(client, userdata, msg):
         # the location is the offset - the number of pixels - 1 * 3.5 (3.5 is the width of 1 pixel)
         y.append(sensors[data['sensor']]['offsetY'] - (cluster['coordinates']['y'] - 1) * 3.5)
 
-        heatmap.append(cluster['heatmaps'])
-        # for heatmaps in cluster['heatmaps']:
-        #     print(heatmap)
-        #     heatmap.append([
-        #         {
-        #             'settings': {
-        #                 'xMax' : heatmaps['settings']['xMax'],
-        #                 'yMax' : heatmaps['settings']['yMax']
-        #             }, 
-        #             'temps' : heatmaps['heatmap']
-        #         }
-        #     ])
-        
+        heatmap = cluster['heatmaps']
+
 
     # Add data to dictionary of sensor
     sensors[data['sensor']]['x'] = x
     sensors[data['sensor']]['y'] = y
     sensors[data['sensor']]['humans'] = data['humans']
-    sensors[data['sensor']]['heatmap'] = heatmap
-
-    print(sensors)
+    sensors[data['sensor']]['heatmaps'] = heatmap
 
     placeCoordinates(sensors)
  
@@ -200,15 +212,7 @@ for i in range(1, numberOfSensors + 1):
         'x' : [],
         'y' : [],
         'humans' : 0,
-        'heatmap' : [
-            {
-                'settings': {
-                    'xMax' : 0,
-                    'yMax' : 0
-                }, 
-                'temps' : []
-            }
-        ]
+        'heatmaps' : []
     }
 
     f.close()
