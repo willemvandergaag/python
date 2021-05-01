@@ -21,7 +21,9 @@ print([hex(i) for i in mlx.serial_number])
 
 mlx.refresh_rate = adafruit_mlx90640.RefreshRate.REFRESH_8_HZ
 
-frame = [0] * 768
+
+
+
 
 while True:
     stamp = time.monotonic()
@@ -29,29 +31,31 @@ while True:
     xc = []
     yc = []
     highTemp = 0
+    frame = [0] * 768
     try:
         mlx.getFrame(frame)
-    except ValueError:
+    except:
         # these happen, no biggie - retry
-        continue    
+        continue
+    
+    
+    frame = [int(round(num)) for num in frame]
+    frameTemps = frame
+    frameTemps = np.reshape(frameTemps, (24, 32))
     for h in range(24):
         for w in range(32):
             if frame[h * 32 + w] > 80:
-                # for high temperatures
                 highTemp = 1
-            if frame[h * 32 + w] < 26 or frame[h * 32 + w] > 31:
-                # human is between 26 and 31 degrees
-                # if other temperature, not relevant
+            if frame[h * 32 + w] < 23 or frame[h * 32 + w] > 31:
                 frame[h * 32 + w] = 0
             else:
                 frame[h * 32 + w] = 1
-    frameEdit = frame
-    # round of numbers, place in array of 24 x 32
-    frameEdit = [int(round(num)) for num in frameEdit]
+    frameEdit = frame 
     frameEdit = np.reshape(frameEdit, (24, 32))
-    
+    #print(frameEdit)
     #make cluster
-    lw, num = measurements.label(frameEdit)   
+    lw, num = measurements.label(frameEdit)
+    
     
     coordinates = lw
     clusters = {} # empty clusters object
@@ -70,7 +74,10 @@ while True:
             cel_num += 1 # next cel
         row_num += 1 # next row
 
-    # loop through every "clusternumber" 
+    # loop through every "clusternumber"
+    
+    heatmap = []
+    
     for cluster_num, cluster_val in clusters.items():
         all_x = [] # every cluster an empty array
         all_y = [] # every cluster an empty array
@@ -82,8 +89,10 @@ while True:
         x_max = max(all_x) # max x
         y_min = min(all_y) # min y
         y_max = max(all_y) # max y
+        
 
-        x_gem = 32 - ((x_min + x_max) / 2) # average x
+
+        x_gem = 32 - ((x_min + x_max) / 2) # average X
         y_gem = (y_min + y_max) / 2 # average y
 
         # every pixel is 1
@@ -93,26 +102,52 @@ while True:
             xc = np.append(xc, x_gem)
             yc = np.append(yc, y_gem)
             humansDetected += 1
-    
-    
+            #print(frameTemps)
+            temperatures = []
+            for y in range(y_min, y_max + 1):
+                for x in range(x_min, x_max + 1):
+                    # print("%0.0f, " % frameTemps[y][x], end="")
+                    temperatures.append(int(frameTemps[y][x]))
+                #print()
+            #print()
+            
+            heatmap.append({
+                "settings": {
+                    "xSize": x_max - x_min + 1,
+                    "ySize": y_max - y_min + 1
+                    },
+                "temps": temperatures
+            })
+            
+        
     clusters = []
 
     for i in range(0, len(xc)):
         clusters.append({
-            "x": xc[i],
-            "y": yc[i]
+            "coordinates":{ 
+                "x": xc[i],
+                "y": yc[i]
+                },
+            "heatmaps": heatmap
         })
+    
+
     data = {
         "data": {
             "sensor": sensor,
             "humans": humansDetected,
             "tempAlert": highTemp,
-            "clusters": clusters
+            "clusters": clusters,
         }
     }
+    
+    
+    
     datastring = json.dumps(data)
+    
     if(datastringOld != datastring):
         publish.single("17089689", datastring, hostname="192.168.0.107")
         print("Sensor read and sent in %0.2f s" % (time.monotonic() - stamp))
-        print(datastring)
+        # print(datastring)
     datastringOld = datastring
+    # print("end")

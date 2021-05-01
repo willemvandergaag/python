@@ -71,6 +71,7 @@ def createHeatmap():
     # print(heatmapArray[0][90])
 
     for i in range(0, len(temps)):
+
         startX = round(plotX[i]) - (xSize[i] / 2)
         startY = 460 - (round(plotY[i]) + (ySize[i] / 2))
 
@@ -78,9 +79,16 @@ def createHeatmap():
         resizeTemp = np.array(resizeTemp)
         resizeTemp = resizeTemp.reshape(ySize[i], xSize[i])
 
-        for x in range(0, xSize[i]):
-            for y in range(0, ySize[i]):
-                heatmapArray[int(startY + y)][int(startX + x)] = resizeTemp[y][x]
+        resizeTemp = np.kron(resizeTemp, np.ones((4,5)))
+
+        # resizeTemp = np.rot90(resizeTemp, 1)
+        # resizeTemp = np.fliplr(resizeTemp)
+        # resizeTemp = np.flipud(resizeTemp)
+            
+        for x in range(0, len(resizeTemp[0]) - 1):
+            for y in range(0, len(resizeTemp) - 1):
+                newTemp = resizeTemp[y][x]
+                heatmapArray[int(startX + x)][int(startY - y)] = newTemp
 
     # find min value, subtract this from all values
     minValue = math.floor(np.amin(heatmapArray))
@@ -149,11 +157,6 @@ def checkCoordinates():
         ySize.append(coordinate['ySize'])
         temps.append(coordinate['temps'])
 
-        # print(plotX)
-        # print(plotY)
-        # print(xSize)
-        # print(ySize)
-        # print(temps)
 
 
 # The callback for when the client receives a CONNACK response from the server.
