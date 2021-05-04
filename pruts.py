@@ -7,20 +7,27 @@
 
 from datetime import date
 import csv
+import math
 
-date = str(date.today())
+# date = str(date.today())
 
-listA = []
+# listA = []
 
-i_x = int(1)
-i_y = int(2)
+# i_x = int(1)
+# i_y = int(2)
 
-print(type(listA))
+# print(type(listA))
 
-listA.append(i_x)
-listA.append(i_y)
+# listA.append(i_x)
+# listA.append(i_y)
 
 
-with open('coordinates-' + date + '1.csv', 'a') as myFile:
-   writer = csv.writer(myFile)
-   writer.writerow(listA)
+# with open('coordinates-' + date + '1.csv', 'a') as myFile:
+#    writer = csv.writer(myFile)
+#    writer.writerow(listA)
+
+x = 5.0
+x = x / 2.0
+print(x)
+x = round(x)
+print(x)

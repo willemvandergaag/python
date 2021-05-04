@@ -5,9 +5,18 @@ import cv2
 import cv2
 import os
 import sys
+import json
 
-roomWidth = 300
-roomLength = 460
+# Read config file
+f = open("C:\\Users\\wille\\Desktop\\python\\configHistory.json")
+data = json.load(f)
+# Read room size
+roomWidth = data['Room width']
+roomLength = data['Room length']
+# Read diameter person
+diameterPerson = data['Width person(pixels)']
+
+# Create array for heatmap and resize
 heatmapArray = [0] * (roomLength * roomWidth)
 heatmapArray = np.asarray(heatmapArray)
 heatmapArray = heatmapArray.reshape(roomLength, roomWidth)
@@ -36,7 +45,10 @@ for name in filelist:
                     # add 1 to the location of the coordinates
                     a = int(row[0])
                     b = int(row[1])
-                    heatmapArray[roomLength - b][a] += 1
+                    radiusPerson = round(diameterPerson / 2)
+                    for x in range (a - radiusPerson, a + radiusPerson):
+                        for y in range (b - radiusPerson, b + radiusPerson):
+                            heatmapArray[roomLength - y][x] += 1
 
 heatmap = heatmapArray
 
@@ -44,8 +56,6 @@ heatmap = heatmapArray
 # find min value, subtract this from all values
 minValue = math.floor(np.amin(heatmap))
 maxValue = math.ceil(np.amax(heatmap))
-print(minValue)
-print(maxValue)
 heatmapComplete = heatmap - minValue
 
 # Now scaled to 0 - 255
@@ -59,9 +69,9 @@ imgA = cv2.applyColorMap(imgAGray, cv2.COLORMAP_JET)
 imgMap = cv2.resize(imgMap, (roomWidth, roomLength))
 
 # blend both images
-dst = cv2.addWeighted(imgMap, 0.6, imgA, 0.4, 0)
+dst = cv2.addWeighted(imgMap, 0.25, imgA, 0.75, 0)
 
 #display heatmap over map
-cv2.imshow('Historic heatmap', imgA)
+cv2.imshow('Historic heatmap', dst)
 
 cv2.waitKey(0)

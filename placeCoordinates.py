@@ -233,7 +233,7 @@ def on_message(client, userdata, msg):
 
 def readConfig():
     # Read config file
-    f = open("C:\\Users\\wille\\Desktop\\python\\config.json")
+    f = open("C:\\Users\\wille\\Desktop\\python\\configLive.json")
     data = json.load(f)
     # Read room size
     global roomX
