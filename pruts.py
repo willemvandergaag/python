@@ -1,79 +1,26 @@
-import matplotlib
-matplotlib.use('TkAgg')
-import time
+# import math
+# import numpy as np
 
-import numpy as np
-import cv2
-import math
-import matplotlib.pyplot as plt
+# a = np.array([[2,3,5], [4,6,7], [1,5,7]])
 
-# names = ['group_a', 'group_b', 'group_c']
-# values = [1, 10, 100]
+# print(np.kron(a, np.ones((4,5))))
 
-# fig = plt.figure(figsize=(9, 3))
-# plt.subplot(131)
-# plt.bar(names, values)
-# plt.subplot(132)
-# plt.scatter(names, values)
-# plt.subplot(133)
-# plt.plot(names, values)
-# plt.suptitle('Categorical Plotting')
+from datetime import date
+import csv
 
+date = str(date.today())
 
-# fig.canvas.draw()
+listA = []
 
-# print(fig)
+i_x = int(1)
+i_y = int(2)
 
-# img = np.fromstring(fig.canvas.tostring_rgb(), dtype=np.uint8,
-#             sep='')
-# img  = img.reshape(fig.canvas.get_width_height()[::-1] + (3,))
+print(type(listA))
 
-#  # img is rgb, convert to opencv's default bgr
-# img = cv2.cvtColor(img,cv2.COLOR_RGB2BGR)
-
-# # display image with opencv or any operation you like
-# cv2.imshow("plot",img)
-# cv2.waitKey(1)
+listA.append(i_x)
+listA.append(i_y)
 
 
-# cv2.waitKey(0)
-
-frame = "22, 23, 25, 25, 28, 27, 25, 24, 26, 27, 29, 28, 25, 24, 23, 22, 22, 22, 22, 21, 21, 21, 21, 22, 22, 21, 21, 21, 21, 21, 21, 21, 23, 24, 25, 26, 28, 27, 26, 26, 27, 27, 26, 25, 23, 23, 22, 22, 22, 22, 21, 21, 21, 22, 21, 21, 21, 21, 21, 22, 21, 22, 21, 21, 23, 23, 25, 26, 28, 28, 27, 27, 27, 25, 24, 22, 23, 22, 22, 22, 23, 22, 21, 21, 22, 22, 21, 21, 22, 21, 21, 20, 22, 21, 21, 20, 22, 23, 25, 26, 28, 27, 27, 28, 25, 24, 22, 22, 22, 22, 22, 22, 22, 22, 21, 21, 21, 21, 21, 21, 21, 22, 20, 21, 21, 21, 21, 21, 22, 21, 22, 22, 23, 23, 25, 24, 22, 22, 21, 22, 22, 21, 22, 22, 22, 21, 21, 21, 22, 21, 21, 21, 21, 21, 21, 21, 22, 21, 21, 20, 21, 21, 21, 22, 22, 22, 22, 22, 22, 22, 21, 21, 21, 22, 21, 22, 21, 22, 21, 21, 21, 21, 21, 21, 21, 22, 21, 22, 20, 22, 21, 21, 22, 21, 21, 20, 22, 21, 22, 21, 22, 22, 21, 21, 21, 21, 21, 21, 22, 21, 22, 21, 21, 21, 21, 21, 21, 21, 21, 21, 21, 21, 21, 21, 22, 22, 21, 21, 21, 21, 21, 22, 21, 22, 22, 22, 21, 21, 21, 21, 22, 22, 21, 21, 21, 22, 21, 21, 21, 22, 21, 22, 21, 21, 21, 22, 21, 21, 21, 21, 21, 21, 21, 21, 21, 21, 22, 22, 22, 22, 22, 21, 22, 22, 21, 21, 21, 21, 21, 20, 22, 21, 21, 21, 21, 21, 22, 21, 21, 21, 21, 21, 22, 22, 21, 22, 21, 22, 21, 22, 22, 22, 22, 22, 22, 22, 22, 22, 21, 22, 21, 21, 21, 22, 21, 22, 21, 21, 20, 22, 22, 21, 21, 21, 21, 21, 21, 21, 22, 22, 22, 21, 22, 22, 22, 22, 22, 22, 22, 22, 22, 22, 21, 21, 22, 21, 21, 21, 22, 21, 22, 21, 22, 22, 21, 21, 22, 22, 22, 22, 22, 22, 22, 22, 22, 22, 22, 22, 22, 22, 22, 22, 22, 22, 21, 21, 21, 22, 21, 22, 22, 22, 20, 22, 21, 21, 21, 20, 21, 21, 21, 21, 22, 21, 22, 22, 23, 22, 22, 21, 22, 22, 22, 21, 22, 22, 22, 21, 22, 21, 21, 22, 22, 21, 21, 21, 20, 21, 21, 21, 21, 21, 21, 22, 22, 22, 22, 22, 22, 23, 22, 22, 22, 22, 21, 22, 22, 22, 21, 21, 21, 21, 20, 22, 21, 21, 20, 21, 21, 21, 21, 21, 22, 21, 22, 22, 22, 22, 22, 22, 22, 22, 22, 21, 22, 22, 21, 21, 22, 22, 21, 21, 21, 21, 21, 21, 21, 21, 21, 20, 21, 22, 21, 22, 21, 21, 22, 22, 22, 22, 21, 22, 22, 22, 22, 22, 22, 22, 21, 22, 21, 22, 21, 21, 21, 21, 21, 22, 20, 22, 21, 22, 21, 21, 20, 20, 21, 21, 21, 21, 22, 22, 22, 22, 22, 22, 21, 22, 22, 21, 22, 22, 22, 22, 21, 21, 21, 22, 20, 21, 22, 21, 20, 20, 22, 21, 21, 21, 22, 21, 21, 22, 21, 21, 21, 22, 22, 22, 22, 22, 22, 22, 21, 22, 22, 22, 21, 22, 21, 21, 21, 21, 21, 21, 22, 22, 20, 22, 21, 21, 21, 21, 21, 21, 22, 21, 22, 22, 22, 21, 22, 22, 22, 22, 21, 22, 22, 22, 22, 22, 22, 21, 21, 21, 22, 21, 21, 21, 21, 21, 20, 21, 21, 21, 21, 21, 21, 22, 22, 22, 22, 22, 21, 22, 23, 22, 22, 22, 22, 22, 22, 22, 21, 22, 21, 22, 21, 21, 21, 22, 21, 20, 22, 21, 21, 21, 21, 22, 22, 21, 21, 22, 22, 22, 22, 22, 22, 22, 22, 22, 22, 22, 21, 21, 22, 21, 21, 20, 22, 21, 21, 20, 21, 21, 20, 21, 21, 21, 21, 21, 21, 22, 21, 21, 22, 22, 22, 22, 22, 22, 21, 22, 22, 22, 22, 22, 22, 22, 22, 22, 22, 23, 21, 22, 20, 21, 20, 21, 21, 21, 21, 21, 21, 21, 22, 20, 21, 22, 21, 22, 21, 22, 22, 22, 21, 22, 23, 22, 23, 22, 22, 21, 22, 21, 20, 18, 19, 21, 20, 21, 21, 21, 20, 21, 21, 21, 21, 22, 21, 22, 21, 21, 21, 22, 22, 22, 22, 22, 22, 22, 22, 23, 22, 22, 21, 22, 19, 22"
-frame = [21] * (768)
-frame = np.asarray(frame)
-outputA = frame.reshape(24,32)
-
-print(outputA)
-outputA[3] = [5] * 32
-
-# find min value, subtract this from all values
-minValue = math.floor(np.amin(outputA))
-maxValue = math.ceil(np.amax(outputA))
-outputAA = outputA - minValue
-
-
-
-print(outputAA)
-
-# Now scaled to 0 - 255
-outputAA = outputAA * 255/ (maxValue - minValue)
-
-# resize image
-# dim = (320, 240)
-# outputAA = cv2.resize(outputAA, dim, interpolation = cv2.INTER_LINEAR )
-
-# apply colormap
-imgAGray = outputAA.astype(np.uint8)
-imgA = cv2.applyColorMap(imgAGray, cv2.COLORMAP_JET)
-
-cv2.imshow('image', imgA)
-
-heatmap = [21] * (300 * 460)
-heatmap = np.matrix(heatmap)
-heatmap = heatmap.reshape(460, 300)
-
-# print(heatmap.shape)
-
-# print(heatmap)
-
-cv2.waitKey(0)
+with open('coordinates-' + date + '1.csv', 'a') as myFile:
+   writer = csv.writer(myFile)
+   writer.writerow(listA)

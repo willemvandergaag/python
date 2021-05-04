@@ -7,6 +7,7 @@ import cv2
 import numpy as np
 import cv2
 import csv
+import math
 
 from matplotlib.patches import Patch
 from matplotlib.lines import Line2D
@@ -83,6 +84,8 @@ def saveData(i_x, i_y):
         writer = csv.writer(myFile)
         writer.writerow(listA)
 
+    myFile.close()
+
 
 def createHeatmap():
     global heatmapArray
@@ -116,7 +119,8 @@ def createHeatmap():
     heatmapComplete = heatmapArray - minValue
 
     # Now scaled to 0 - 255
-    heatmapComplete = heatmapComplete * 255 / (maxValue - minValue)
+    if minValue != maxValue:
+        heatmapComplete = heatmapComplete * 255 / (maxValue - minValue)
 
     # apply colormap
     imgAGray = heatmapComplete.astype(np.uint8)
@@ -124,6 +128,8 @@ def createHeatmap():
 
     #display heatmap
     cv2.imshow('image', imgA)
+
+
 
 
 def checkCoordinates():
@@ -283,6 +289,7 @@ readConfig()
 
 client.connect("192.168.0.107", 1883)
 img = plt.imread("C:\\Users\\wille\\Desktop\\python\\maptoscale.jpg")
+img = cv2.resize(img, (300, 460))
 
 # Process network traffic and dispatch callbacks. This will also handle
 # reconnecting. Check the documentation at
