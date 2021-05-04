@@ -42,21 +42,19 @@ for name in filelist:
             #  only if there is something on a row
             for row in csv_reader:
                 if row:
-                    # add 1 to the location of the coordinates
+                    # get coordinates
                     a = int(row[0])
                     b = int(row[1])
                     radiusPerson = round(diameterPerson / 2)
+                    # place radius around person
                     for x in range (a - radiusPerson, a + radiusPerson):
                         for y in range (b - radiusPerson, b + radiusPerson):
                             heatmapArray[roomLength - y][x] += 1
 
-heatmap = heatmapArray
-
-
 # find min value, subtract this from all values
-minValue = math.floor(np.amin(heatmap))
-maxValue = math.ceil(np.amax(heatmap))
-heatmapComplete = heatmap - minValue
+minValue = math.floor(np.amin(heatmapArray))
+maxValue = math.ceil(np.amax(heatmapArray))
+heatmapComplete = heatmapArray - minValue
 
 # Now scaled to 0 - 255
 heatmapComplete = heatmapComplete * 255 / (maxValue - minValue)
