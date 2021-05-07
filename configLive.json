@@ -2,6 +2,7 @@
     "Room width" : 300,
     "Room length" : 460,
     "Number of sensors" : 2,
+    "Max offset humans": 30,
     "locations" : [
         {
         "id" : 1,

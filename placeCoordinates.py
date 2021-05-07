@@ -13,18 +13,20 @@ from matplotlib.patches import Patch
 from matplotlib.lines import Line2D
 from datetime import date
 
+fig = plt.figure()
 
 def placeCoordinates(sensors):
-    fig = plt.figure()
-
+    plt.clf()
     # display map of room
     plt.imshow(img, extent=[0, roomX, 0, roomY])
 
+    checkCoordinates()
+
     # create heatmap of people
-    createHeatmap()
+    showHeatmap()
 
     # plot locations of sensors
-    plt.plot(sensorLocationX, sensorLocationY, 'r.', markersize=8)
+    plt.plot(sensorLocationX, sensorLocationY, 'g.', markersize=8)
 
     # If the list is not empty, plot x and y
     if(len(plotX) > 0 and len(plotY) > 0):
@@ -32,7 +34,6 @@ def placeCoordinates(sensors):
 
     # display list of locations
     plt.text(-250, 445, 'Locations of people', weight='bold')
-
     # Offset creates a new row for every coordinate
     offsetText = 1
     # place coordinates next to map
@@ -49,6 +50,8 @@ def placeCoordinates(sensors):
     legend_elements = [Line2D([0], [0], marker='X', color='w', label='Person',
                               markerfacecolor='b', markersize=15),
                        Line2D([0], [0], marker='.', color='w', label='Sensor',
+                              markerfacecolor='g', markersize=15),
+                       Line2D([0], [0], marker='8', color='w', label='Very hot object',
                               markerfacecolor='r', markersize=15)]
 
     plt.legend(handles=legend_elements, title='Symbols',
@@ -60,13 +63,13 @@ def placeCoordinates(sensors):
     cvImg = np.fromstring(fig.canvas.tostring_rgb(), dtype=np.uint8, sep='')
     cvImg = cvImg.reshape(fig.canvas.get_width_height()[::-1] + (3,))
 
-    plt.clf()
-
     # img is rgb, convert to opencv's default bgr
     cvImg = cv2.cvtColor(cvImg, cv2.COLOR_RGB2BGR)
 
     # display image with opencv
     cv2.imshow("plot", cvImg)
+
+    cv2.imwrite("C:\\Users\\wille\\Desktop\\python\\test.png", cvImg)
     cv2.waitKey(1)
 
 
@@ -86,32 +89,39 @@ def saveData(i_x, i_y):
 
     myFile.close()
 
-
-def createHeatmap():
-    global heatmapArray
-    heatmapArray = [20] * (300 * 460)
+def showHeatmap():
+    xArray = plotX
+    yArray = plotY
+    heatmapArray = [21] * (roomX * roomY)
     heatmapArray = np.asarray(heatmapArray)
-    heatmapArray = heatmapArray.reshape(460, 300)
+    heatmapArray = heatmapArray.reshape(roomY, roomX)
 
-    for i in range(0, len(temps)):
+    for i in range(0, len(xArray)):
+        # x en y zijn middelpunt persoon in cm in array vorm
+        # waarbij [0][0] = linksboven
+        x = xArray[i]
+        y = roomY - yArray[i]
 
-        startX = round(plotX[i]) - (xSize[i] / 2)
-        startY = 460 - (round(plotY[i]) + (ySize[i] / 2))
 
-        resizeTemp = temps[i]
-        resizeTemp = np.array(resizeTemp)
-        resizeTemp = resizeTemp.reshape(ySize[i], xSize[i])
+        # heatmapArray[y][x] = 60
+        # maak startpunt heatmap aan 
+        # startpunt is linksbovenhoek van de heatmap pp in cm
+        startx = int(x - xSize[i] * 4.8)
+        if startx < 0:
+            startx = 0
+        starty = int(y - ySize[i] * 3.5)
+        # temperaturen worden opgehaald en in een array gezet met de meegeleverde dimensies
+        tempsList = temps[i]
+        tempsArray = np.asarray(tempsList)
+        tempsArray = tempsArray.reshape((ySize[i], xSize[i]))
+        tempsArray = np.fliplr(tempsArray)
 
-        resizeTemp = np.kron(resizeTemp, np.ones((4, 5)))
+        tempsArray = np.kron(tempsArray, np.ones((4, 5)))
 
-        resizeTemp = np.rot90(resizeTemp, 1)
-        # resizeTemp = np.fliplr(resizeTemp)
-        resizeTemp = np.flipud(resizeTemp)
 
-        for x in range(0, len(resizeTemp[0]) - 1):
-            for y in range(0, len(resizeTemp) - 1):
-                newTemp = resizeTemp[y][x]
-                heatmapArray[int(startX + x)][int(startY - y)] = newTemp
+        for yTemp in range(0, len(tempsArray)):
+            for xTemp in range(0, len(tempsArray[0])):
+                heatmapArray[starty + yTemp][startx + xTemp] = tempsArray[yTemp][xTemp]
 
     # find min value, subtract this from all values
     minValue = math.floor(np.amin(heatmapArray))
@@ -127,10 +137,7 @@ def createHeatmap():
     imgA = cv2.applyColorMap(imgAGray, cv2.COLORMAP_JET)
 
     #display heatmap
-    cv2.imshow('image', imgA)
-
-
-
+    cv2.imshow('heatmap', imgA)
 
 def checkCoordinates():
     # Loop through all sensors
@@ -202,7 +209,9 @@ def on_message(client, userdata, msg):
     data = payload['data']
     #print(payload)
     if (data['tempAlert'] > 0):
-        print("Temperature above 80 detected!")
+        sensors[data['sensor']]['tempAlert'] = 1
+    else:
+        sensors[data['sensor']]['tempAlert'] = 0
 
     x = []
     y = []
@@ -210,23 +219,21 @@ def on_message(client, userdata, msg):
     heatmap = []
 
     for cluster in data['clusters']:
-        # the location is the offset + the number of pixels - 1 * 4.8 (4.8 is the width of 1 pixel)
+        # the x location is the offset + the number of pixels - 1 * 4.8 (4.8 is the width of 1 pixel)
         x.append(sensors[data['sensor']]['offsetX'] +
                  (cluster['coordinates']['x'] - 1) * 4.8)
-        # the location is the offset - the number of pixels - 1 * 3.5 (3.5 is the width of 1 pixel)
+        # the y location is the offset - the number of pixels - 1 * 3.5 (3.5 is the height of 1 pixel)
         y.append(sensors[data['sensor']]['offsetY'] -
                  (cluster['coordinates']['y'] - 1) * 3.5)
 
         heatmap = cluster['heatmaps']
 
+
     # Add data to dictionary of sensor
     sensors[data['sensor']]['x'] = x
     sensors[data['sensor']]['y'] = y
     sensors[data['sensor']]['humans'] = data['humans']
-    sensors[data['sensor']]['heatmaps'] = heatmap
-
-    #check overlaying coordinates
-    checkCoordinates()
+    sensors[data['sensor']]['heatmaps'] = heatmap    
 
     placeCoordinates(sensors)
 
@@ -243,6 +250,10 @@ def readConfig():
     # Read number of sensors
     global numberOfSensors
     numberOfSensors = data['Number of sensors']
+
+    # amount of overlap that is the same human
+    global maxDifference    
+    maxDifference = data['Max offset humans']
 
     # numberOfSensors = 2
     global sensorLocationX
@@ -270,14 +281,15 @@ def readConfig():
             'x': [],
             'y': [],
             'humans': 0,
-            'heatmaps': []
+            'heatmaps': [],
+            'tempAlert': 0
         }
 
-        f.close()
+    f.close()
 
 
 sensors = {}
-maxDifference = 30.0
+
 
 # Create an MQTT client and attach our routines to it.
 client = mqtt.Client()
@@ -289,7 +301,9 @@ readConfig()
 
 client.connect("192.168.0.107", 1883)
 img = plt.imread("C:\\Users\\wille\\Desktop\\python\\maptoscale.jpg")
-img = cv2.resize(img, (300, 460))
+img = cv2.resize(img, (roomX, roomY))
+# warningImg = plt.imread("C:\\Users\\wille\\Desktop\\python\\hightemp.png")
+# warningImg = cv2.resize(warningImg, (int(4.8*32), int(3.5*24)))
 
 # Process network traffic and dispatch callbacks. This will also handle
 # reconnecting. Check the documentation at
